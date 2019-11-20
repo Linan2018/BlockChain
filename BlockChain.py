@@ -171,20 +171,16 @@ class BlockChain:
         }
         block['hash'] = self.calculate_hash(block)
 
-        # self.mine_block(self.difficulty)
-        if self.mine_block(block):
-            self.chain.append(block)
-            # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
-            self.__pending_transactions = [{
-                'sender': "",
-                'recipient': mining_reward_address,
-                'amount': self.mining_reward,
-            }]
-            print(mining_reward_address, "挖矿成功，添加一笔事务，作为此次挖矿的奖励")
-            return True, block
-        else:
-            print(mining_reward_address, "挖矿失败，其他节点已经成功挖矿")
-            return False, None
+        self.mine_block(self.difficulty)
+        self.chain.append(block)
+        # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
+        self.__pending_transactions = [{
+            'sender': "",
+            'recipient': mining_reward_address,
+            'amount': self.mining_reward,
+        }]
+        print(mining_reward_address, "挖矿成功，添加一笔事务，作为此次挖矿的奖励")
+        return block
 
     def get_balance_of_address(self, address):
         """

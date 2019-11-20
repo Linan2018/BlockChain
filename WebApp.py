@@ -20,20 +20,17 @@ blockchain = BlockChain()
 
 @app.route('/mine', methods=['GET'])
 def mine():
-    success, block = blockchain.mine_pending_transaction(node_identifier)
+    block = blockchain.mine_pending_transaction(node_identifier)
     # We run the proof of work algorithm to get the next proof...
 
-    if success:
-        response = {
-            'message': "New Block Forged",
-            'index': block['index'],
-            'transactions': block['transactions'],
-            'proof': block['proof'],
-            'previous_hash': block['previous_hash'],
-        }
-        return jsonify(response), 200
-    else:
-        return "挖矿失败，其他节点已经成功挖矿", 204
+    response = {
+        'message': "New Block Forged",
+        'index': block['index'],
+        'transactions': block['transactions'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash'],
+    }
+    return jsonify(response), 200
 
 
 @app.route('/chain', methods=['GET'])
