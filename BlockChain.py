@@ -67,18 +67,18 @@ class BlockChain:
         """
         return self.chain[-1]
 
-    def add_transaction(self, sender, recipient, amount):
+    def add_transaction(self, transaction):
         """
         添加交易
         """
         # 这里应该根据业务对交易进行一些列的验证
         '''TODO'''
         # 添加到待处理交易
-        transaction = {
-            'sender': sender,
-            'recipient': recipient,
-            'amount': amount
-        }
+        # transaction = {
+        #     'sender': sender,
+        #     'recipient': recipient,
+        #     'amount': amount
+        # }
         self.__pending_transactions.append(transaction)
 
     def verify_blockchain(self, chain):
@@ -171,7 +171,7 @@ class BlockChain:
         }
         block['hash'] = self.calculate_hash(block)
 
-        self.mine_block(self.difficulty)
+        self.mine_block(block)
         self.chain.append(block)
         # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
         self.__pending_transactions = [{

@@ -7,6 +7,11 @@ from flask import Flask
 from flask import jsonify
 from flask import request
 from BlockChain import BlockChain
+import socket
+import udp
+import os
+
+# 没写监听 广播加进去了 没写main 考虑用多进程
 
 # Instantiate our Node
 app = Flask(__name__)
@@ -22,6 +27,13 @@ blockchain = BlockChain()
 def mine():
     block = blockchain.mine_pending_transaction(node_identifier)
     # We run the proof of work algorithm to get the next proof...
+
+    content = {
+        'type': 'block',
+        'block': block
+    }
+
+    udp.broadcast(content)
 
     response = {
         'message': "New Block Forged",
@@ -45,17 +57,27 @@ def full_chain():
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.get_json()
-    print(values)
+    # print(values)
 
     # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    # Create a new Transaction
-    index = blockchain.add_transaction(values['sender'], values['recipient'], values['amount'])
+    content = {
+        'type': 'transaction',
+        'message': 'Add a new transaction.',
+        'transaction': values
+    }
 
-    response = {'message': f'Transaction will be added to Block {index}'}
+    udp.broadcast(content)
+
+    # Create a new Transaction
+    blockchain.add_transaction(values)
+
+    response = {'message': f'A transaction will be added to Block Chain'}
+
+    # response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
 
 
@@ -63,12 +85,21 @@ def new_transaction():
 def register_nodes():
     values = request.get_json()
 
-    nodes = values.get('nodes')
-    if nodes is None:
+    node = values.get('node')
+    if node is None:
         return "Error: Please supply a valid list of nodes", 400
 
-    for node in nodes:
-        blockchain.register_node(node)
+    # 广播 ##########################
+    content = {
+        'type': 'node',
+        'message': 'Add a new node: ' + '"{}"'.format(node),
+        'node': node
+    }
+
+    udp.broadcast(content)
+    # 广播结束 ##########################
+
+    blockchain.register_node(node)
 
     response = {
         'message': 'New nodes have been added',
@@ -79,6 +110,10 @@ def register_nodes():
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
+    """
+    查询其他所有节点
+    :return: resolve后的chain
+    """
     replaced = blockchain.resolve_conflicts()
 
     if replaced:
@@ -95,5 +130,32 @@ def consensus():
     return jsonify(response), 200
 
 
+def receive(data):
+    data = json.loads(data.decode('utf-8'))
+
+    required = ['sender', 'recipient', 'amount']
+    if not any(k in data for k in required):
+        print('收到无效信息')
+        return
+
+    if data['type'] == 'block':
+        blockchain.chain.append(data['block'])
+        print('Receive a new block.')
+    elif data['type'] == 'transaction':
+        blockchain.add_transaction(data['transaction'])
+        print('Receive a new transaction.')
+    elif data['type'] == 'node':
+        blockchain.register_node(data['node'])
+        print('Receive a new node.')
+    else:
+        print('收到无效信息')
+    return
+
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    pid = os.fork()
+    if pid == 0:
+        print('app进程: I am child process (%s) and my parent is %s.' % (os.getpid(), os.getppid()))
+    else:
+        print('监听进程: I (%s) just created a child process (%s).' % (os.getpid(), pid))
+        app.run(host='0.0.0.0', port=5000)
