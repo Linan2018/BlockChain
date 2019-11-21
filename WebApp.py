@@ -75,7 +75,7 @@ def new_transaction():
     # Create a new Transaction
     blockchain.add_transaction(values)
 
-    response = {'message': f'A transaction will be added to Block Chain'}
+    response = {'message': 'A transaction will be added to Block Chain'}
 
     # response = {'message': f'Transaction will be added to Block {index}'}
     return jsonify(response), 201
