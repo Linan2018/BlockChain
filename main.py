@@ -1,9 +1,9 @@
-from BlockChain import BlockChain
-from uuid import uuid4
 import json
-import time
-import threading
 import socket
+import threading
+from uuid import uuid4
+
+from BlockChain import BlockChain
 
 # unique address for this node
 node_identifier = str(uuid4()).replace('-', '')
@@ -15,21 +15,19 @@ s.connect(('8.8.8.8', 80))
 ip = s.getsockname()[0]
 s.close()
 
-lock = threading.Lock()
-
 
 def listen():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    s_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s_.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
     port = 4000
 
-    s.bind(('', port))
-    print('Listening for broadcast at ', s.getsockname())
+    s_.bind(('', port))
+    print('Listening for broadcast at ', s_.getsockname())
 
     while True:
-        data, address = s.recvfrom(65535)
-        receive(data)
+        data, address = s_.recvfrom(65535)
+        receive(data, address[0])
 
 
 def broadcast(content):
@@ -45,13 +43,13 @@ def broadcast(content):
 
 
 def mine():
-    global lock
     global blockchain
 
-    while True:
-        lock.acquire()
+    register_nodes(ip)
 
-        if blockchain.mine_pending_transaction(node_identifier):
+    while True:
+
+        if blockchain.mine_pending_transaction(ip):
             # We run the proof of work algorithm to get the next proof...
             content = {
                 'type': 'chain',
@@ -60,16 +58,11 @@ def mine():
 
             broadcast(content)
 
-        lock.release()
-
 
 def register_nodes(node):
     global blockchain
-    global lock
 
-    lock.acquire()
     blockchain.register_node(node)
-    print("register_nodes")
 
     content = {
         'type': 'node',
@@ -79,12 +72,8 @@ def register_nodes(node):
 
     broadcast(content)
 
-    lock.release()
 
-    return
-
-
-def receive(data):
+def receive(data, address):
     global blockchain
 
     data = json.loads(data.decode('utf-8'))
@@ -96,7 +85,7 @@ def receive(data):
         return
 
     if data['type'] == 'chain':
-        blockchain.replace_chain(data['chain'])
+        blockchain.replace_chain(data['chain'], address)
         print('Receive a new chain.')
         print('现在共有{}个区块'.format(len(blockchain.chain)))
 
@@ -104,7 +93,7 @@ def receive(data):
         blockchain.add_transaction(data['transaction'])
 
     elif data['type'] == 'node':
-        blockchain.register_node(data['ip'])
+        blockchain.register_node(address)
         print('Receive a new node.')
         print('现在共有{}个节点'.format(len(blockchain.nodes)))
     else:
@@ -112,21 +101,9 @@ def receive(data):
     return
 
 
-def wait():
-    global lock
-    lock.acquire()
-    print('loading')
-    time.sleep(5)
-    lock.release()
-
-
 if __name__ == '__main__':
     t_listen = threading.Thread(target=listen)
-    t_wait = threading.Thread(target=wait)
-    t_reg = threading.Thread(target=register_nodes, args=(ip,))
     t_mine = threading.Thread(target=mine)
 
     t_listen.start()
-    t_wait.start()
-    t_reg.start()
     t_mine.start()
