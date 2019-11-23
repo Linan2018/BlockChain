@@ -1,9 +1,10 @@
-import time
 import hashlib
 import json
+import random
+import sys
+import time
+
 import requests
-from flask import request
-from urllib.parse import urlparse
 
 
 class BlockChain:
@@ -16,7 +17,7 @@ class BlockChain:
         self.chain = [self.__create_genesis_block()]
 
         # 设置初始难度
-        self.difficulty = 4
+        self.difficulty = 5
 
         # 设置一个挖矿奖励
         self.mining_reward = 5
@@ -110,33 +111,42 @@ class BlockChain:
         by replacing our chain with the longest one in the network.
         :return: <bool> True if our chain was replaced, False if not
         """
-
         neighbours = self.nodes
         new_chain = None
-
+        print('解决冲突，共有{}个节点'.format(len(neighbours)))
         # We're only looking for chains longer than ours
         max_length = len(self.chain)
 
         # Grab and verify the chains from all the nodes in our network
         for node in neighbours:
-            response = requests.get(f'http://{}/chain'.format(node))
+            # response = requests.get('http://{}/chain'.format(node))
+            # response = requests.get('http://{}/chain'.format(node['ip']))
+            print(node)
+            response = requests.get('http://' + node + ':5000/chain')
 
             if response.status_code == 200:
                 length = response.json()['length']
                 chain = response.json()['chain']
-                print(node, length, max_length, self.verify_blockchain(chain))
+                valid = self.verify_blockchain(chain)
+                print('-----------------------------------------------------------')
+                print('正在检查节点{}的区块链：'.format(node))
+                print('该区块链是否合法', valid)
+                print('其长度为{}，已检查过的最大长度为{}'.format(length, max_length))
+                print(chain)
+                print('-----------------------------------------------------------')
 
                 # Check if the length is longer and the chain is valid
-                if length > max_length and self.verify_blockchain(chain):
+                if length > max_length and valid:
                     max_length = length
                     new_chain = chain
 
         # Replace our chain if we discovered a new, valid chain longer than ours
         if new_chain:
             self.chain = new_chain
-            return True
+            print('更新本地区块链')
+            # return True
 
-        return False
+        return id(self)
 
     def mine_block(self, block):
         """
@@ -161,26 +171,32 @@ class BlockChain:
         :param mining_reward_address: 挖矿奖励的地址
         :return:
         """
+
+        # print(self.nodes)
+
+        # self.resolve_conflicts()
+
         block = {
             'index': len(self.chain),
             'previous_hash': self.latest_block["hash"],
             'timestamp': time.time(),
             'transactions': self.__pending_transactions,
-            'proof': 0,
+            'proof': random.randint(0, sys.maxsize),
             'hash': ''
         }
         block['hash'] = self.calculate_hash(block)
 
         self.mine_block(block)
         self.chain.append(block)
+        print('当前链的长度为', len(self.chain))
         # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
         self.__pending_transactions = [{
             'sender': "",
             'recipient': mining_reward_address,
             'amount': self.mining_reward,
         }]
-        print(mining_reward_address, "挖矿成功，添加一笔事务，作为此次挖矿的奖励")
-        return block
+        # print(mining_reward_address, "挖矿成功，添加一笔事务，作为此次挖矿的奖励")
+        return True
 
     def get_balance_of_address(self, address):
         """
@@ -199,46 +215,18 @@ class BlockChain:
                     balance += trans["amount"]
         return balance
 
-    def register_node(self, address):
+    def register_node(self, node):
         """
         Add a new node to the list of nodes
         :param address: <str> Address of node. Eg. 'http://192.168.0.5:5000'
         :return: None
         """
 
-        parsed_url = urlparse(address)
-        print(parsed_url)
-        self.nodes.add(parsed_url.netloc)
+        # parsed_url = urlparse(address)
+        # print(parsed_url)
+        self.nodes.add(node)
 
-
-if __name__ == '__main__':
-    # 测试使用区块链
-    blockChain = BlockChain()
-    # print(dir(blockChain))
-    # 添加两笔交易
-    blockChain.add_transaction("address1", "address2", 100)
-    blockChain.add_transaction("address2", "address1", 50)
-    # address3 挖取待处理的交易
-    # for b in blockChain.chain:
-    #     print(b["transactions"])
-    # 查看账户余额
-    blockChain.mine_pending_transaction('address3')
-    # for b in blockChain.chain:
-    #     print(b["transactions"])
-    # 查看账户余额
-    print('address1 余额 ', blockChain.get_balance_of_address('address1'))
-    print('address2 余额 ', blockChain.get_balance_of_address('address2'))
-    print('address3 余额 ', blockChain.get_balance_of_address('address3'))
-    # address2 挖取待处理的交易
-    blockChain.mine_pending_transaction('address2')
-    # for b in blockChain.chain:
-    #     print(b["transactions"])
-    print('address1 余额 ', blockChain.get_balance_of_address('address1'))
-    print('address2 余额 ', blockChain.get_balance_of_address('address2'))
-    print('address3 余额 ', blockChain.get_balance_of_address('address3'))
-    blockChain.mine_pending_transaction('address3')
-    blockChain.mine_pending_transaction('address3')
-    blockChain.mine_pending_transaction('address3')
-    print('address1 余额 ', blockChain.get_balance_of_address('address1'))
-    print('address2 余额 ', blockChain.get_balance_of_address('address2'))
-    print('address3 余额 ', blockChain.get_balance_of_address('address3'))
+    def replace_chain(self, chain):
+        if len(chain) > len(self.chain) and self.verify_blockchain(chain):
+            self.chain = chain
+            print('更新本地区块链')
