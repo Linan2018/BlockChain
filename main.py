@@ -97,9 +97,9 @@ def receive(data, address):
         blockchain.add_transaction(data['transaction'])
 
     elif data['type'] == 'node':
-        blockchain.register_node(address)
-        print('Thread2: Receive a new node...')
-
+        if data['node'] != node_identifier:
+            print('Thread2: Receive a new node...')
+            register_nodes(address)
     else:
         print('Thread2: Receive an invalid msg!')
     return
