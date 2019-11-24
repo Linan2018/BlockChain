@@ -99,7 +99,7 @@ class BlockChain:
     def mine_block(self, block):
         """
         """
-        print('Mining...')
+        print('Thread1: Mining...')
         time_start = time.clock()
 
         # 要求hash值前difficulty位为0
@@ -127,6 +127,7 @@ class BlockChain:
 
         self.mine_block(block)
         self.chain.append(block)
+        print('Thread1: The length of our chain is {}'.format(len(self.chain)))
         # print('当前链的长度为', len(self.chain))
         # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
         self.__pending_transactions = [{

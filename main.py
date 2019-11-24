@@ -33,7 +33,7 @@ def listen():
 
 
 def broadcast(content):
-    print('Thread1: broadcast:', content['type'])
+    print('Thread1: broadcast ', content['type'])
     s_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s_.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
