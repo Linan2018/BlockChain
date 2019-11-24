@@ -16,7 +16,7 @@ class BlockChain:
         self.chain = [self.__create_genesis_block()]
 
         # 设置初始难度
-        self.difficulty = 4
+        self.difficulty = 5
 
         # 设置一个挖矿奖励
         self.mining_reward = 5
@@ -99,6 +99,7 @@ class BlockChain:
     def mine_block(self, block):
         """
         """
+        print('Mining...')
         time_start = time.clock()
 
         # 要求hash值前difficulty位为0
@@ -109,7 +110,7 @@ class BlockChain:
             else:
                 return False
 
-        print("Get a new block:%s, time: %fs" % (block['hash'], time.clock() - time_start))
+        print("Get a new block:%s, cost time: %fs" % (block['hash'], time.clock() - time_start))
         return True
 
     def mine_pending_transaction(self, mining_reward_address):
@@ -155,6 +156,7 @@ class BlockChain:
 
     def register_node(self, node):
         self.nodes.add(node)
+        print('Now there is {} node(s).'.format(len(self.nodes)))
 
     def replace_chain(self, chain, mining_reward_address):
         if len(chain) > len(self.chain) and self.verify_blockchain(chain):
@@ -165,3 +167,4 @@ class BlockChain:
                 'amount': self.mining_reward,
             }]
             print('Replaced!')
+            print('Now the length of block chain is {}.'.format(len(self.chain)))

@@ -91,7 +91,7 @@ def receive(data, address):
         if data['node'] != node_identifier:
             blockchain.replace_chain(data['chain'], address)
             print('Receive a new chain...')
-            print('Now the length of block chain is {}.'.format(len(blockchain.chain)))
+
 
     elif data['type'] == 'transaction':
         blockchain.add_transaction(data['transaction'])
@@ -99,7 +99,7 @@ def receive(data, address):
     elif data['type'] == 'node':
         blockchain.register_node(address)
         print('Receive a new node...')
-        print('Now there is {} node(s).'.format(len(blockchain.nodes)))
+
     else:
         print('Receive an invalid msg!')
     return
