@@ -51,7 +51,7 @@ def mine():
 
     while True:
 
-        if blockchain.mine_pending_transaction(ip):
+        if blockchain.mine_block(ip):
             # We run the proof of work algorithm to get the next proof...
             content = {
                 'type': 'chain',

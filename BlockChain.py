@@ -96,24 +96,11 @@ class BlockChain:
                 return False
         return True
 
-    def mine_block(self, block):
+    def mine_block(self, mining_reward_address):
         """
         """
-        print('Thread1: Mining...')
-        time_start = time.clock()
 
-        # 要求hash值前difficulty位为0
-        while block['hash'][0: self.difficulty] != '0' * self.difficulty:
-            if block['index'] == len(self.chain):
-                block['proof'] += 1
-                block['hash'] = self.calculate_hash(block)
-            else:
-                return False
-
-        print("Thread1: Find a new block:%s, take %fs" % (block['hash'], time.clock() - time_start))
-        return True
-
-    def mine_pending_transaction(self, mining_reward_address):
+        success = True
 
         block = {
             'index': len(self.chain),
@@ -125,18 +112,27 @@ class BlockChain:
         }
         block['hash'] = self.calculate_hash(block)
 
-        self.mine_block(block)
-        self.chain.append(block)
-        print('Thread1: The length of our chain is {}'.format(len(self.chain)))
-        # print('当前链的长度为', len(self.chain))
-        # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
-        self.__pending_transactions = [{
-            'sender': "",
-            'recipient': mining_reward_address,
-            'amount': self.mining_reward,
-        }]
+        print('Thread1: Mining...')
+        time_start = time.clock()
 
-        return True
+        # 要求hash值前difficulty位为0
+        while block['hash'][0: self.difficulty] != '0' * self.difficulty:
+            if block['index'] == len(self.chain):
+                block['proof'] += 1
+                block['hash'] = self.calculate_hash(block)
+            else:
+                success = False
+                print('Thread1: Mining failed')
+        if success:
+            print("Thread1: Find a new block:%s, take %fs" % (block['hash'], time.clock() - time_start))
+            self.chain.append(block)
+            print('Thread1: The length of our chain is {}'.format(len(self.chain)))
+            self.__pending_transactions = [{
+                'sender': "",
+                'recipient': mining_reward_address,
+                'amount': self.mining_reward,
+            }]
+        return success
 
     def get_balance_of_address(self, address):
         """
