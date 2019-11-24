@@ -25,7 +25,7 @@ def listen():
     port = 4000
 
     s_.bind(('', port))
-    print('Listening for broadcast at ', s_.getsockname())
+    print('Thread2: Listening for broadcast at ', s_.getsockname())
 
     while True:
         data, address = s_.recvfrom(65535)
@@ -33,7 +33,7 @@ def listen():
 
 
 def broadcast(content):
-    print('broadcast:', content['type'])
+    print('Thread1: broadcast:', content['type'])
     s_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s_.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
@@ -83,25 +83,25 @@ def receive(data, address):
 
     required = ['chain', 'transaction', 'node']
     if not any(k in data for k in required):
-        print('Receive an invalid msg!')
+        print('Thread2: Receive an invalid msg!')
         # print(data)
         return
 
     if data['type'] == 'chain':
         if data['node'] != node_identifier:
+            print('Thread2: Receive a new chain with a length of {}'.format(len(data['chain'])))
+            print('Thread2: The length of our chain is {}'.format(len(blockchain.chain)))
             blockchain.replace_chain(data['chain'], address)
-            print('Receive a new chain...')
-
 
     elif data['type'] == 'transaction':
         blockchain.add_transaction(data['transaction'])
 
     elif data['type'] == 'node':
         blockchain.register_node(address)
-        print('Receive a new node...')
+        print('Thread2: Receive a new node...')
 
     else:
-        print('Receive an invalid msg!')
+        print('Thread2: Receive an invalid msg!')
     return
 
 

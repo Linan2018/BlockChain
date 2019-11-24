@@ -110,7 +110,7 @@ class BlockChain:
             else:
                 return False
 
-        print("Get a new block:%s, cost time: %fs" % (block['hash'], time.clock() - time_start))
+        print("Thread1: Find a new block:%s, take %fs" % (block['hash'], time.clock() - time_start))
         return True
 
     def mine_pending_transaction(self, mining_reward_address):
@@ -166,5 +166,5 @@ class BlockChain:
                 'recipient': mining_reward_address,
                 'amount': self.mining_reward,
             }]
-            print('Replaced!')
-            print('Now the length of block chain is {}.'.format(len(self.chain)))
+            print('Thread2: Replaced by the new chain!')
+            print('Thread2: Now the length of our chain is {}.'.format(len(self.chain)))
