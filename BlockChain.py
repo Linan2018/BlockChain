@@ -122,7 +122,8 @@ class BlockChain:
                 block['hash'] = self.calculate_hash(block)
             else:
                 success = False
-                print('Thread1: Mining failed')
+                break
+
         if success:
             print("Thread1: Find a new block:%s, take %fs" % (block['hash'], time.clock() - time_start))
             self.chain.append(block)
@@ -132,6 +133,8 @@ class BlockChain:
                 'recipient': mining_reward_address,
                 'amount': self.mining_reward,
             }]
+        else:
+            print('Thread1: Mining failed.')
         return success
 
     def get_balance_of_address(self, address):
