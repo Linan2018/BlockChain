@@ -1,3 +1,4 @@
+# coding=utf-8
 import hashlib
 import json
 import random
@@ -108,7 +109,7 @@ class BlockChain:
             else:
                 return False
 
-        print("挖到区块:%s, 耗时: %f秒" % (block['hash'], time.clock() - time_start))
+        print("Get a new block:%s, time: %fs" % (block['hash'], time.clock() - time_start))
         return True
 
     def mine_pending_transaction(self, mining_reward_address):
@@ -125,7 +126,7 @@ class BlockChain:
 
         self.mine_block(block)
         self.chain.append(block)
-        print('当前链的长度为', len(self.chain))
+        # print('当前链的长度为', len(self.chain))
         # 挖矿成功后 重置待处理事务 添加一笔事务 就是此次挖矿的奖励
         self.__pending_transactions = [{
             'sender': "",
@@ -163,4 +164,4 @@ class BlockChain:
                 'recipient': mining_reward_address,
                 'amount': self.mining_reward,
             }]
-            print('更新本地区块链')
+            print('Replaced!')

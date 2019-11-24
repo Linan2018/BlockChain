@@ -1,3 +1,5 @@
+#!/bin/python3
+# coding=utf-8
 import json
 import socket
 import threading
@@ -31,7 +33,7 @@ def listen():
 
 
 def broadcast(content):
-    print('广播:', content['type'])
+    print('broadcast:', content['type'])
     s_ = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s_.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
@@ -53,7 +55,8 @@ def mine():
             # We run the proof of work algorithm to get the next proof...
             content = {
                 'type': 'chain',
-                'chain': blockchain.chain
+                'chain': blockchain.chain,
+                'node': node_identifier
             }
 
             broadcast(content)
@@ -80,24 +83,25 @@ def receive(data, address):
 
     required = ['chain', 'transaction', 'node']
     if not any(k in data for k in required):
-        print('收到无效信息')
+        print('Receive an invalid msg!')
         # print(data)
         return
 
     if data['type'] == 'chain':
-        blockchain.replace_chain(data['chain'], address)
-        print('Receive a new chain.')
-        print('现在共有{}个区块'.format(len(blockchain.chain)))
+        if data['node'] != node_identifier:
+            blockchain.replace_chain(data['chain'], address)
+            print('Receive a new chain...')
+            print('Now the length of block chain is {}.'.format(len(blockchain.chain)))
 
     elif data['type'] == 'transaction':
         blockchain.add_transaction(data['transaction'])
 
     elif data['type'] == 'node':
         blockchain.register_node(address)
-        print('Receive a new node.')
-        print('现在共有{}个节点'.format(len(blockchain.nodes)))
+        print('Receive a new node...')
+        print('Now there is {} node(s).'.format(len(blockchain.nodes)))
     else:
-        print('收到无效信息')
+        print('Receive an invalid msg!')
     return
 
 
