@@ -65,15 +65,14 @@ def mine():
 def register_nodes(node):
     global blockchain
 
-    blockchain.register_node(node)
+    if not blockchain.register_node(node):
+        content = {
+            'type': 'node',
+            'node': node_identifier,
+            'ip': ip
+        }
 
-    content = {
-        'type': 'node',
-        'node': node_identifier,
-        'ip': ip
-    }
-
-    broadcast(content)
+        broadcast(content)
 
 
 def receive(data, address):

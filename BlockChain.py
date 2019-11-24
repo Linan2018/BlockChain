@@ -155,8 +155,12 @@ class BlockChain:
         return balance
 
     def register_node(self, node):
-        self.nodes.add(node)
-        print('Now there is {} node(s).'.format(len(self.nodes)))
+        if node in self.nodes:
+            return True
+        else:
+            self.nodes.add(node)
+            print('Now there is {} node(s).'.format(len(self.nodes)))
+            return False
 
     def replace_chain(self, chain, mining_reward_address):
         if len(chain) > len(self.chain) and self.verify_blockchain(chain):
