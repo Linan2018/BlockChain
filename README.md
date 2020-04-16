@@ -1,11 +1,11 @@
 # BlockChain
 基于局域网广播的去中心化区块链系统
 
-# Note
+## Note
 - 使用python3.6
 - 打开4000端口
 
-# Setup
+## Setup
 
 ```
 firewall-cmd --zone=public --add-port=4000/udp --permanent
